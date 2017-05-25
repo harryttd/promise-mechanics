@@ -39,27 +39,30 @@ class $Promise {
 
     this._handlerGroups.forEach(group => {
       if (this._isFulfilled()) {
-        if (this._isFunc(group.successCb)) {
-          group.successCb(this._value);
-        }
-      } else {
-        if (this._isFunc(group.errorCb)) {
-          group.errorCb(this._value);
-        }
+        const success = this._isFunc(group.successCb) ? group.successCb(this._value) : null;
+        group.downstreamPromise._internalResolve(success || this._value);
+      }
+      else {
+        const error = this._isFunc(group.errorCb) ? group.errorCb(this._value) : null;
+        if (error) group.downstreamPromise._internalResolve(error);
+        else group.downstreamPromise._internalReject(this._value);
       }
     });
     this._handlerGroups = [];
   }
 
   then(successCb, errorCb) {
+    const downstreamPromise = new $Promise();
     this._handlerGroups.push({
       successCb: this._valueIfFunc(successCb),
-      errorCb: this._valueIfFunc(errorCb)
+      errorCb: this._valueIfFunc(errorCb),
+      downstreamPromise
     });
     this._callHandlers();
+    return downstreamPromise;
   }
 
-  catch(errorCb) { this.then(null, errorCb); }
+  catch(errorCb) { return this.then(null, errorCb); }
 
 }
 

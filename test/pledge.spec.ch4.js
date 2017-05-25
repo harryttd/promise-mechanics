@@ -40,7 +40,7 @@ describe('For a given promiseA (pA)', function(){
   // Our parent promise must maintain some kind of reference to the downstream
   // promise, in order to control chaining.
 
-  xit('`.then` adds a new promise to its handler group', function(){
+  it('`.then` adds a new promise to its handler group', function(){
     promiseA.then();
     var groups = promiseA._handlerGroups;
     expect( groups[0].downstreamPromise instanceof $Promise ).toBe( true );
@@ -53,7 +53,7 @@ describe('For a given promiseA (pA)', function(){
   // Passing this may break your `.catch` from chapter 3. If that happens,
   // you will have to go back and fix `.catch`, taking this spec into account.
 
-  xit('`.then` returns that downstream promise', function(){
+  it('`.then` returns that downstream promise', function(){
     var promiseB = promiseA.then();
     expect( promiseB ).toBe( promiseA._handlerGroups[0].downstreamPromise );
   });
@@ -71,7 +71,7 @@ describe('For a given promiseA (pA)', function(){
 
     // Fulfillment bubbles down to the first available success handler.
 
-    xit("if pA is fulfilled but has no success handler, pB is fulfilled with pA's value", function (done) {
+    it("if pA is fulfilled but has no success handler, pB is fulfilled with pA's value", function (done) {
       var promiseB = promiseA.then();
       promiseA._internalResolve( 9001 );
       // Do not set state manually; a resolver should be called somewhere.
@@ -84,7 +84,7 @@ describe('For a given promiseA (pA)', function(){
 
     // Rejection bubbles down to the first available error handler.
 
-    xit("if pA is rejected but has no error handler, pB is rejected with pA's reason", function (done) {
+    it("if pA is rejected but has no error handler, pB is rejected with pA's reason", function (done) {
       var promiseB = promiseA.then();
       promiseA._internalReject( 'darn' );
       // Do not set state manually; a rejector should be called somewhere.
@@ -96,7 +96,7 @@ describe('For a given promiseA (pA)', function(){
 
     // This is for normal (synchronous / non-promise) return values
 
-    xit("if pA's success handler returns a value `x`, pB is fulfilled with `x`", function (done) {
+    it("if pA's success handler returns a value `x`, pB is fulfilled with `x`", function (done) {
       var promiseB = promiseA.then( thisReturnsHi );
       promiseA._internalResolve();
       expect( promiseB ).toFulfillWith( 'hi', done );
@@ -104,7 +104,7 @@ describe('For a given promiseA (pA)', function(){
 
     // This is for normal (synchronous / non-promise) return values
 
-    xit("if pA's error handler returns a value `x`, pB is fulfilled with `x`", function (done) {
+    it("if pA's error handler returns a value `x`, pB is fulfilled with `x`", function (done) {
       // Why fulfilled? This is similar to `try`-`catch`. If promiseA is
       // rejected (equivalent to `try` failure), we pass the reason to
       // promiseA's error handler (equivalent to `catch`). We have now
