@@ -38,14 +38,31 @@ class $Promise {
     if (this._isPending()) return;
 
     this._handlerGroups.forEach(group => {
+      const { successCb, errorCb, downstreamPromise } = group;
+
       if (this._isFulfilled()) {
-        const success = this._isFunc(group.successCb) ? group.successCb(this._value) : null;
-        group.downstreamPromise._internalResolve(success || this._value);
+        if (this._isFunc(successCb)) {
+          let success;
+          try {
+            success = successCb(this._value);
+            downstreamPromise._internalResolve(success);
+          } catch (err) {
+            downstreamPromise._internalReject(err);
+          }
+        }
+        downstreamPromise._internalResolve(this._value);
       }
       else {
-        const error = this._isFunc(group.errorCb) ? group.errorCb(this._value) : null;
-        if (error) group.downstreamPromise._internalResolve(error);
-        else group.downstreamPromise._internalReject(this._value);
+        if (this._isFunc(errorCb)) {
+          let error;
+          try {
+            error = errorCb(this._value);
+            downstreamPromise._internalResolve(error);
+          } catch (err) {
+            downstreamPromise._internalReject(err);
+          }
+        }
+        downstreamPromise._internalReject(this._value);
       }
     });
     this._handlerGroups = [];
