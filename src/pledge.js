@@ -24,6 +24,7 @@ class $Promise {
       this._value = value;
       this._state = 'rejected';
     }
+    this._callHandlers();
   }
 
   _isPending() { return this._state === 'pending'; }
@@ -37,9 +38,13 @@ class $Promise {
     if (this._isPending()) return;
 
     this._handlerGroups.forEach(group => {
-      if (this._state === 'fulfilled') {
+      if (this._isFulfilled()) {
         if (this._isFunc(group.successCb)) {
           group.successCb(this._value);
+        }
+      } else {
+        if (this._isFunc(group.errorCb)) {
+          group.errorCb(this._value);
         }
       }
     });
@@ -53,6 +58,8 @@ class $Promise {
     });
     this._callHandlers();
   }
+
+  catch(errorCb) { this.then(null, errorCb); }
 
 }
 
