@@ -231,7 +231,6 @@ describe('The executor function', function(){
       var promise = new $Promise(function (resolve) {
         resolve('WinGARdium leviOHsa.');
       });
-      console.log(promise);
       expect( promise._state ).toBe( 'fulfilled' );
       expect( promise._value ).toBe( 'WinGARdium leviOHsa.' );
     });

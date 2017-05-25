@@ -7,6 +7,7 @@ class $Promise {
   constructor(executer) {
     this._state = 'pending';
     this._value = undefined;
+    this._handlerGroups = [];
     executer && executer(this._internalResolve.bind(this), this._internalReject.bind(this));
   }
 
@@ -15,6 +16,7 @@ class $Promise {
       this._value = value;
       this._state = 'fulfilled';
     }
+    this._callHandlers();
   }
 
   _internalReject(value) {
@@ -23,6 +25,35 @@ class $Promise {
       this._state = 'rejected';
     }
   }
+
+  _isPending() { return this._state === 'pending'; }
+  _isFulfilled() { return this._state === 'fulfilled'; }
+  _isRejected() { return this._state === 'rejected'; }
+
+  _isFunc(input) { return typeof input === 'function'; }
+  _valueIfFunc(value) { return this._isFunc(value) ? value : undefined; }
+
+  _callHandlers() {
+    if (this._isPending()) return;
+
+    this._handlerGroups.forEach(group => {
+      if (this._state === 'fulfilled') {
+        if (this._isFunc(group.successCb)) {
+          group.successCb(this._value);
+        }
+      }
+    });
+    this._handlerGroups = [];
+  }
+
+  then(successCb, errorCb) {
+    this._handlerGroups.push({
+      successCb: this._valueIfFunc(successCb),
+      errorCb: this._valueIfFunc(errorCb)
+    });
+    this._callHandlers();
+  }
+
 }
 
 
