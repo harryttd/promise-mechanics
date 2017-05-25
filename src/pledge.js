@@ -34,37 +34,40 @@ class $Promise {
   _isFunc(input) { return typeof input === 'function'; }
   _valueIfFunc(value) { return this._isFunc(value) ? value : undefined; }
 
+  _handleFulfilled(group) {
+    const { successCb, downstreamPromise } = group;
+    if (this._isFunc(successCb)) {
+      try {
+        let success = successCb(this._value);
+        downstreamPromise._internalResolve(success);
+      } catch (err) {
+        downstreamPromise._internalReject(err);
+      }
+    }
+    downstreamPromise._internalResolve(this._value);
+  }
+
+  _handleRejected(group) {
+    const { errorCb, downstreamPromise } = group;
+    if (this._isFunc(errorCb)) {
+      try {
+        let error = errorCb(this._value);
+        downstreamPromise._internalResolve(error);
+      } catch (err) {
+        downstreamPromise._internalReject(err);
+      }
+    }
+    downstreamPromise._internalReject(this._value);
+  }
+
   _callHandlers() {
     if (this._isPending()) return;
 
     this._handlerGroups.forEach(group => {
-      const { successCb, errorCb, downstreamPromise } = group;
-
-      if (this._isFulfilled()) {
-        if (this._isFunc(successCb)) {
-          let success;
-          try {
-            success = successCb(this._value);
-            downstreamPromise._internalResolve(success);
-          } catch (err) {
-            downstreamPromise._internalReject(err);
-          }
-        }
-        downstreamPromise._internalResolve(this._value);
-      }
-      else {
-        if (this._isFunc(errorCb)) {
-          let error;
-          try {
-            error = errorCb(this._value);
-            downstreamPromise._internalResolve(error);
-          } catch (err) {
-            downstreamPromise._internalReject(err);
-          }
-        }
-        downstreamPromise._internalReject(this._value);
-      }
+      if (this._isFulfilled()) this._handleFulfilled(group);
+      else this._handleRejected(group);
     });
+
     this._handlerGroups = [];
   }
 
