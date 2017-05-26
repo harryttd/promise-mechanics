@@ -1,4 +1,5 @@
 'use strict';
+
 /*----------------------------------------------------------------
 Promises Workshop: build the pledge.js ES6-style promise library
 ----------------------------------------------------------------*/
@@ -34,51 +35,40 @@ class $Promise {
   _isFunc(input) { return typeof input === 'function'; }
   _valueIfFunc(value) { return this._isFunc(value) ? value : undefined; }
 
-  _handleFulfilled(group) {
-    const { successCb, downstreamPromise } = group;
-    if (this._isFunc(successCb)) {
-      try {
-        const success = successCb(this._value);
-        if (this._isPromise(success)) {
-          success.then(
-            (value) => downstreamPromise._internalResolve(value),
-            (err) => downstreamPromise._internalReject(err)
-          );
-        }
-        else downstreamPromise._internalResolve(success);
-      } catch (err) {
-        downstreamPromise._internalReject(err);
+  _executeHandler(callback, downstreamPromise) {
+    try {
+      const executedCallback = callback(this._value);
+      if (this._isPromise(executedCallback)) {
+        executedCallback.then(
+          (value) => downstreamPromise._internalResolve(value),
+          (err) => downstreamPromise._internalReject(err)
+        );
       }
-    }
-    else downstreamPromise._internalResolve(this._value);
-  }
-
-  _handleRejected(group) {
-    const { errorCb, downstreamPromise } = group;
-    if (this._isFunc(errorCb)) {
-      try {
-        const error = errorCb(this._value);
-        if (this._isPromise(error)) {
-          error.then(
-            (value) => downstreamPromise._internalResolve(value),
-            (err) => downstreamPromise._internalReject(err)
-          );
-        }
-        else downstreamPromise._internalResolve(error);
-      } catch (err) {
-        downstreamPromise._internalReject(err);
+      else {
+        downstreamPromise._internalResolve(executedCallback);
       }
+    } catch (error) {
+      downstreamPromise._internalReject(error);
     }
-    else downstreamPromise._internalReject(this._value);
   }
 
   _callHandlers() {
-    if (this._isPending()) return;
-
     this._handlerGroups.forEach(group => {
-      // const { successCb, errorCb, downstreamPromise } = group;
-      if (this._isFulfilled()) this._handleFulfilled(group);
-      else this._handleRejected(group);
+      const { successCb, errorCb, downstreamPromise } = group;
+      if (this._isFulfilled()) {
+        if (this._isFunc(successCb)) {
+          this._executeHandler(successCb, downstreamPromise);
+        } else {
+          downstreamPromise._internalResolve(this._value);
+        }
+      }
+      else {
+        if (this._isFunc(errorCb)) {
+          this._executeHandler(errorCb, downstreamPromise);
+        } else {
+          downstreamPromise._internalReject(this._value);
+        }
+      }
     });
 
     this._handlerGroups = [];
@@ -91,24 +81,10 @@ class $Promise {
       errorCb: this._valueIfFunc(errorCb),
       downstreamPromise
     });
-    this._callHandlers();
+    if (!this._isPending()) this._callHandlers();
     return downstreamPromise;
   }
 
   catch(errorCb) { return this.then(null, errorCb); }
 
 }
-
-
-/*-------------------------------------------------------
-The spec was designed to work with Test'Em, so we don't
-actually use module.exports. But here it is for reference:
-
-module.exports = $Promise;
-
-So in a Node-based project we could write things like this:
-
-var Promise = require('pledge');
-…
-var promise = new Promise(function (resolve, reject) { … });
---------------------------------------------------------*/
