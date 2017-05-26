@@ -147,7 +147,7 @@ describe('For a given promiseA (pA)', function(){
       expect( promiseB ).toFulfillWith( 'testing', done );
     }, FAST_TIMEOUT);
 
-    xit("if pA's error handler returns promiseZ which fulfills, pB mimics pZ", function (done) {
+    it("if pA's error handler returns promiseZ which fulfills, pB mimics pZ", function (done) {
       var promiseZ = new $Promise();
       var promiseB = promiseA.catch(function(){
         return promiseZ;
@@ -157,7 +157,7 @@ describe('For a given promiseA (pA)', function(){
       expect( promiseB ).toFulfillWith( 'testing', done );
     }, FAST_TIMEOUT);
 
-    xit("if pA's success handler returns promiseZ which rejects, pB mimics pZ", function (done) {
+    it("if pA's success handler returns promiseZ which rejects, pB mimics pZ", function (done) {
       var promiseZ = new $Promise();
       var promiseB = promiseA.then(function(){
         return promiseZ;
@@ -167,7 +167,7 @@ describe('For a given promiseA (pA)', function(){
       expect( promiseB ).toRejectWith( 'testing', done );
     }, FAST_TIMEOUT);
 
-    xit("if pA's error handler returns promiseZ which rejects, pB mimics pZ", function (done) {
+    it("if pA's error handler returns promiseZ which rejects, pB mimics pZ", function (done) {
       var promiseZ = new $Promise();
       var promiseB = promiseA.catch(function(){
         return promiseZ;
@@ -184,7 +184,7 @@ describe('For a given promiseA (pA)', function(){
     // promise. But of course you can still chain off of settled promises!
     // Your solution might already pass this. But maybe not…
 
-    xit('still chains correctly if the promise is already settled', function (done) {
+    it('still chains correctly if the promise is already settled', function (done) {
       // utility / helper functions
       var count = 0, shouldFulfill, shouldReject;
       function countPassed () { if (++count === 10) done(); }
@@ -228,7 +228,7 @@ describe('For a given promiseA (pA)', function(){
 
   // Another demonstration. This should work if the previous specs passed.
 
-  xit('`.then` can be chained many times', function(){
+  it('`.then` can be chained many times', function(){
     var add1 = function (num) { return ++num; };
     var test = 0;
     promiseA

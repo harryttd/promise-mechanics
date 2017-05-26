@@ -15,22 +15,22 @@ class $Promise {
     if (this._state === 'pending') {
       this._value = value;
       this._state = 'fulfilled';
+      this._callHandlers();
     }
-    this._callHandlers();
   }
 
   _internalReject(value) {
     if (this._state === 'pending') {
       this._value = value;
       this._state = 'rejected';
+      this._callHandlers();
     }
-    this._callHandlers();
   }
 
   _isPending() { return this._state === 'pending'; }
   _isFulfilled() { return this._state === 'fulfilled'; }
   _isRejected() { return this._state === 'rejected'; }
-
+  _isPromise(value) { return value instanceof $Promise; }
   _isFunc(input) { return typeof input === 'function'; }
   _valueIfFunc(value) { return this._isFunc(value) ? value : undefined; }
 
@@ -38,32 +38,45 @@ class $Promise {
     const { successCb, downstreamPromise } = group;
     if (this._isFunc(successCb)) {
       try {
-        let success = successCb(this._value);
-        downstreamPromise._internalResolve(success);
+        const success = successCb(this._value);
+        if (this._isPromise(success)) {
+          success.then(
+            (value) => downstreamPromise._internalResolve(value),
+            (err) => downstreamPromise._internalReject(err)
+          );
+        }
+        else downstreamPromise._internalResolve(success);
       } catch (err) {
         downstreamPromise._internalReject(err);
       }
     }
-    downstreamPromise._internalResolve(this._value);
+    else downstreamPromise._internalResolve(this._value);
   }
 
   _handleRejected(group) {
     const { errorCb, downstreamPromise } = group;
     if (this._isFunc(errorCb)) {
       try {
-        let error = errorCb(this._value);
-        downstreamPromise._internalResolve(error);
+        const error = errorCb(this._value);
+        if (this._isPromise(error)) {
+          error.then(
+            (value) => downstreamPromise._internalResolve(value),
+            (err) => downstreamPromise._internalReject(err)
+          );
+        }
+        else downstreamPromise._internalResolve(error);
       } catch (err) {
         downstreamPromise._internalReject(err);
       }
     }
-    downstreamPromise._internalReject(this._value);
+    else downstreamPromise._internalReject(this._value);
   }
 
   _callHandlers() {
     if (this._isPending()) return;
 
     this._handlerGroups.forEach(group => {
+      // const { successCb, errorCb, downstreamPromise } = group;
       if (this._isFulfilled()) this._handleFulfilled(group);
       else this._handleRejected(group);
     });
