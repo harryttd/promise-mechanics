@@ -9,7 +9,8 @@ class $Promise {
     this._state = 'pending';
     this._value = undefined;
     this._handlerGroups = [];
-    executer && executer(this._internalResolve.bind(this), this._internalReject.bind(this));
+
+    this._isFunc(executer) && executer(this._internalResolve.bind(this), this._internalReject.bind(this));
   }
 
   _internalResolve(value) {
@@ -30,15 +31,13 @@ class $Promise {
 
   _isPending() { return this._state === 'pending'; }
   _isFulfilled() { return this._state === 'fulfilled'; }
-  _isRejected() { return this._state === 'rejected'; }
-  _isPromise(value) { return value instanceof $Promise; }
   _isFunc(input) { return typeof input === 'function'; }
   _valueIfFunc(value) { return this._isFunc(value) ? value : undefined; }
 
   _executeHandler(callback, downstreamPromise) {
     try {
       const executedCallback = callback(this._value);
-      if (this._isPromise(executedCallback)) {
+      if ($Promise._isPromise(executedCallback)) {
         executedCallback.then(
           (value) => downstreamPromise._internalResolve(value),
           (err) => downstreamPromise._internalReject(err)
@@ -47,7 +46,8 @@ class $Promise {
       else {
         downstreamPromise._internalResolve(executedCallback);
       }
-    } catch (error) {
+    }
+    catch (error) {
       downstreamPromise._internalReject(error);
     }
   }
@@ -87,4 +87,36 @@ class $Promise {
 
   catch(errorCb) { return this.then(null, errorCb); }
 
+  static _isPromise(value) { return value instanceof $Promise; }
+
+  static resolve(value) {
+    if ($Promise._isPromise(value)) return value;
+    return new $Promise(
+      resolve => resolve(value)
+    );
+  }
+
+  static all(array) {
+    if (!Array.isArray(array)) throw TypeError();
+
+    const newDefer = new $Promise(),
+          originalArrayLength = array.length,
+          afterResolveValues = [];
+
+    let amountResolved = 0;
+
+    array.forEach((item, index) => {
+      $Promise.resolve(item)
+      .then(value => {
+        afterResolveValues[index] = value;
+        amountResolved++;
+        if (amountResolved === originalArrayLength) {
+          newDefer._internalResolve(afterResolveValues);
+        }
+      })
+      .catch(newDefer._internalReject.bind(newDefer));
+    });
+
+    return newDefer;
+  }
 }
